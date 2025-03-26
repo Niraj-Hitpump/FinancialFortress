@@ -47,16 +47,21 @@ export const transactions = pgTable("transactions", {
   notes: text("notes"),
 });
 
-export const insertTransactionSchema = createInsertSchema(transactions).pick({
-  description: true,
-  amount: true,
-  date: true,
-  type: true,
-  categoryId: true,
-  userId: true,
-  accountId: true,
-  notes: true,
-});
+export const insertTransactionSchema = createInsertSchema(transactions)
+  .pick({
+    description: true,
+    amount: true,
+    date: true,
+    type: true,
+    categoryId: true,
+    userId: true,
+    accountId: true,
+    notes: true,
+  })
+  .extend({
+    // Override the date field to accept string input
+    date: z.string().or(z.date())
+  });
 
 // Financial goals schema
 export const goals = pgTable("goals", {
@@ -70,15 +75,20 @@ export const goals = pgTable("goals", {
   status: text("status").notNull(), // 'on_track', 'falling_behind', 'just_started', 'completed'
 });
 
-export const insertGoalSchema = createInsertSchema(goals).pick({
-  title: true,
-  description: true,
-  targetAmount: true,
-  currentAmount: true,
-  targetDate: true,
-  userId: true,
-  status: true,
-});
+export const insertGoalSchema = createInsertSchema(goals)
+  .pick({
+    title: true,
+    description: true,
+    targetAmount: true,
+    currentAmount: true,
+    targetDate: true,
+    userId: true,
+    status: true,
+  })
+  .extend({
+    // Override the targetDate field to accept string input
+    targetDate: z.string().or(z.date())
+  });
 
 // Upcoming events schema
 export const events = pgTable("events", {
@@ -92,15 +102,20 @@ export const events = pgTable("events", {
   category: text("category").notNull(), // 'Housing', 'Insurance', 'Utilities', etc.
 });
 
-export const insertEventSchema = createInsertSchema(events).pick({
-  title: true,
-  description: true,
-  amount: true,
-  date: true,
-  userId: true,
-  priority: true,
-  category: true,
-});
+export const insertEventSchema = createInsertSchema(events)
+  .pick({
+    title: true,
+    description: true,
+    amount: true,
+    date: true,
+    userId: true,
+    priority: true,
+    category: true,
+  })
+  .extend({
+    // Override the date field to accept string input
+    date: z.string().or(z.date())
+  });
 
 // Bank accounts schema
 export const accounts = pgTable("accounts", {
