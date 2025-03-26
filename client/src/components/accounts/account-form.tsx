@@ -71,12 +71,19 @@ export default function AccountForm({
       
       const method = isEditing ? "PUT" : "POST";
       
-      await apiRequest(method, endpoint, {
-        ...formData,
-        userId,
-        balance: parseFloat(formData.balance),
-        credentials: {}
-      });
+      // Properly format submission data
+      const submissionData = {
+        name: formData.name,
+        accountNumber: formData.accountNumber,
+        bankName: formData.bankName,
+        accountType: formData.accountType,
+        balance: String(formData.balance), // Ensure it's a string
+        userId: userId,
+        notes: formData.notes || "",
+        credentials: {} // Required field
+      };
+      
+      await apiRequest(method, endpoint, submissionData);
       
       toast({
         title: isEditing ? "Account updated" : "Account added",

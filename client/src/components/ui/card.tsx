@@ -2,19 +2,58 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm",
-      className
-    )}
-    {...props}
-  />
-))
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: "default" | "glass" | "gradient" | "outline" | "noBg"
+  animation?: "scale" | "slide" | "fade" | "none"
+  bordered?: boolean
+  hoverEffect?: boolean
+}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, variant = "default", animation = "none", bordered = true, hoverEffect = true, ...props }, ref) => {
+    const baseClasses = "rounded-lg shadow-sm transition-all duration-300"
+    
+    // Variant-specific classes
+    const variantClasses = {
+      default: "bg-card text-card-foreground",
+      glass: "glass backdrop-blur-md bg-opacity-20 bg-card/20 text-card-foreground",
+      gradient: "bg-gradient-to-br from-blue-600 to-indigo-800 text-white",
+      outline: "bg-transparent border border-border text-card-foreground",
+      noBg: "bg-transparent text-card-foreground"
+    }
+    
+    // Animation classes
+    const animationClasses = {
+      scale: "hover:scale-[1.02]",
+      slide: "hover:-translate-y-1",
+      fade: "hover:opacity-95",
+      none: ""
+    }
+    
+    // Border classes
+    const borderClasses = bordered ? "border" : "border-0"
+    
+    // Hover effect
+    const hoverClasses = hoverEffect 
+      ? "hover:shadow-lg transition-shadow"
+      : ""
+    
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          baseClasses,
+          variantClasses[variant],
+          animationClasses[animation],
+          borderClasses,
+          hoverClasses,
+          className
+        )}
+        {...props}
+      />
+    )
+  }
+)
 Card.displayName = "Card"
 
 const CardHeader = React.forwardRef<
