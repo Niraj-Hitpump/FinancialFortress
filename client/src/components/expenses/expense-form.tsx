@@ -84,12 +84,19 @@ export default function ExpenseForm({
       
       const method = isEditing ? "PUT" : "POST";
       
-      await apiRequest(method, endpoint, {
-        ...formData,
-        userId,
+      // Ensure numeric fields are properly formatted
+      const submissionData = {
+        description: formData.description,
+        amount: String(formData.amount), // Ensure it's a string
+        date: new Date(formData.date).toISOString(), // Format date properly
+        type: formData.type,
         categoryId: Number(formData.categoryId),
-        accountId: Number(formData.accountId)
-      });
+        accountId: Number(formData.accountId),
+        userId: userId,
+        notes: formData.notes || ""
+      };
+      
+      await apiRequest(method, endpoint, submissionData);
       
       toast({
         title: isEditing ? "Transaction updated" : "Transaction added",

@@ -86,11 +86,18 @@ export default function EventForm({
       
       const method = isEditing ? "PUT" : "POST";
       
-      await apiRequest(method, endpoint, {
-        ...formData,
-        userId,
-        amount: parseFloat(formData.amount),
-      });
+      // Properly format the data
+      const submissionData = {
+        title: formData.title,
+        description: formData.description || "", // Ensure description is not undefined
+        amount: String(formData.amount), // Ensure it's a string
+        date: new Date(formData.date).toISOString(), // Format date properly
+        userId: userId,
+        priority: formData.priority,
+        category: formData.category
+      };
+      
+      await apiRequest(method, endpoint, submissionData);
       
       toast({
         title: isEditing ? "Event updated" : "Event added",
