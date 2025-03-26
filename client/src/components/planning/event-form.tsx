@@ -147,7 +147,7 @@ export default function EventForm({
         title: formData.title.trim(),
         description: formData.description?.trim() || null,
         amount: formData.amount.toString(),
-        date: new Date(formData.date).toISOString(),
+        date: new Date(formData.date), // Send as Date object
         userId: userId,
         priority: formData.priority,
         category: formData.category
@@ -294,7 +294,7 @@ export default function EventForm({
       
       <Button 
         type="submit" 
-        variant="gradient" 
+        variant="default" 
         className={cn("w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white", 
           isSubmitting && "opacity-70")}
         disabled={isSubmitting}

@@ -145,7 +145,7 @@ export default function ExpenseForm({
       const submissionData = {
         description: formData.description.trim(),
         amount: formData.amount.toString(),
-        date: new Date(formData.date).toISOString(),
+        date: new Date(formData.date), // Send as Date object
         type: formData.type,
         categoryId: parseInt(formData.categoryId.toString()),
         accountId: parseInt(formData.accountId.toString()),
