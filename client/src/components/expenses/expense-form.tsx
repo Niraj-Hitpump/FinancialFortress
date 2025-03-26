@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -45,12 +45,27 @@ export default function ExpenseForm({
     categoryId: 1,
     accountId: 1,
     notes: "",
-    ...initialValues
   };
   
-  const [formData, setFormData] = useState(defaultValues);
+  const [formData, setFormData] = useState({...defaultValues});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  
+  // Initialize form with initial values when they are available
+  useEffect(() => {
+    if (initialValues) {
+      setFormData({
+        description: initialValues.description || "",
+        amount: initialValues.amount || "",
+        date: initialValues.date || new Date().toISOString().split('T')[0],
+        type: initialValues.type || "expense",
+        categoryId: initialValues.categoryId || 1,
+        accountId: initialValues.accountId || 1,
+        notes: initialValues.notes || "",
+      });
+    }
+  }, [initialValues]);
   
   // Fetch categories
   const { data: categories = [] } = useQuery({
@@ -62,19 +77,61 @@ export default function ExpenseForm({
     queryKey: [`/api/accounts?userId=${userId}`],
   });
   
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    
+    if (!formData.description.trim()) {
+      errors.description = "Description is required";
+    }
+    
+    if (!formData.amount) {
+      errors.amount = "Amount is required";
+    } else if (isNaN(parseFloat(formData.amount))) {
+      errors.amount = "Amount must be a valid number";
+    }
+    
+    if (!formData.date) {
+      errors.date = "Date is required";
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+  
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    
+    // Clear error when field is changed
+    if (formErrors[name]) {
+      setFormErrors({ ...formErrors, [name]: "" });
+    }
   };
   
   const handleSelectChange = (name: string, value: string) => {
     setFormData({ ...formData, [name]: value });
+    
+    // Clear error when field is changed
+    if (formErrors[name]) {
+      setFormErrors({ ...formErrors, [name]: "" });
+    }
   };
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors in the form.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -86,15 +143,17 @@ export default function ExpenseForm({
       
       // Ensure numeric fields are properly formatted
       const submissionData = {
-        description: formData.description,
-        amount: String(formData.amount), // Ensure it's a string
-        date: new Date(formData.date).toISOString(), // Format date properly
+        description: formData.description.trim(),
+        amount: formData.amount.toString(),
+        date: new Date(formData.date).toISOString(),
         type: formData.type,
-        categoryId: Number(formData.categoryId),
-        accountId: Number(formData.accountId),
+        categoryId: parseInt(formData.categoryId.toString()),
+        accountId: parseInt(formData.accountId.toString()),
         userId: userId,
-        notes: formData.notes || ""
+        notes: formData.notes?.trim() || null
       };
+      
+      console.log("Submitting data:", submissionData);
       
       await apiRequest(method, endpoint, submissionData);
       
@@ -105,12 +164,25 @@ export default function ExpenseForm({
           : "Your transaction has been added successfully.",
       });
       
+      // Reset form after successful submission if not editing
+      if (!isEditing) {
+        setFormData({...defaultValues});
+      }
+      
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting form:", error);
+      
+      // More detailed error handling
+      let errorMessage = `Failed to ${isEditing ? 'update' : 'add'} transaction.`;
+      
+      if (error.message) {
+        errorMessage += ` ${error.message}`;
+      }
+      
       toast({
         title: "Error",
-        description: `Failed to ${isEditing ? 'update' : 'add'} transaction. Please try again.`,
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -127,7 +199,7 @@ export default function ExpenseForm({
             value={formData.type}
             onValueChange={(value) => handleSelectChange("type", value)}
           >
-            <SelectTrigger className="w-full mt-1">
+            <SelectTrigger id="type" className="w-full mt-1">
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
@@ -144,9 +216,12 @@ export default function ExpenseForm({
             name="description"
             value={formData.description}
             onChange={handleChange}
-            className="mt-1"
+            className={cn("mt-1", formErrors.description && "border-red-500")}
             required
           />
+          {formErrors.description && (
+            <p className="text-sm text-red-500 mt-1">{formErrors.description}</p>
+          )}
         </div>
         
         <div className="grid grid-cols-2 gap-4">
@@ -160,9 +235,12 @@ export default function ExpenseForm({
               min="0"
               value={formData.amount}
               onChange={handleChange}
-              className="mt-1"
+              className={cn("mt-1", formErrors.amount && "border-red-500")}
               required
             />
+            {formErrors.amount && (
+              <p className="text-sm text-red-500 mt-1">{formErrors.amount}</p>
+            )}
           </div>
           
           <div>
@@ -173,9 +251,12 @@ export default function ExpenseForm({
               type="date"
               value={formData.date}
               onChange={handleChange}
-              className="mt-1"
+              className={cn("mt-1", formErrors.date && "border-red-500")}
               required
             />
+            {formErrors.date && (
+              <p className="text-sm text-red-500 mt-1">{formErrors.date}</p>
+            )}
           </div>
         </div>
         
@@ -186,7 +267,7 @@ export default function ExpenseForm({
               value={String(formData.categoryId)}
               onValueChange={(value) => handleSelectChange("categoryId", value)}
             >
-              <SelectTrigger className="w-full mt-1">
+              <SelectTrigger id="categoryId" className="w-full mt-1">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
@@ -205,7 +286,7 @@ export default function ExpenseForm({
               value={String(formData.accountId)}
               onValueChange={(value) => handleSelectChange("accountId", value)}
             >
-              <SelectTrigger className="w-full mt-1">
+              <SelectTrigger id="accountId" className="w-full mt-1">
                 <SelectValue placeholder="Select account" />
               </SelectTrigger>
               <SelectContent>

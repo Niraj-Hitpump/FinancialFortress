@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -42,12 +42,26 @@ export default function EventForm({
     date: new Date().toISOString().split('T')[0],
     priority: "medium",
     category: "Utilities",
-    ...initialValues
   };
   
-  const [formData, setFormData] = useState(defaultValues);
+  const [formData, setFormData] = useState({...defaultValues});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  
+  // Initialize form with initial values when they are available
+  useEffect(() => {
+    if (initialValues) {
+      setFormData({
+        title: initialValues.title || "",
+        description: initialValues.description || "",
+        amount: initialValues.amount || "",
+        date: initialValues.date || new Date().toISOString().split('T')[0],
+        priority: initialValues.priority || "medium",
+        category: initialValues.category || "Utilities",
+      });
+    }
+  }, [initialValues]);
   
   const eventCategories = [
     "Housing",
@@ -64,19 +78,61 @@ export default function EventForm({
     "Other"
   ];
   
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    
+    if (!formData.title.trim()) {
+      errors.title = "Title is required";
+    }
+    
+    if (!formData.amount) {
+      errors.amount = "Amount is required";
+    } else if (isNaN(parseFloat(formData.amount))) {
+      errors.amount = "Amount must be a valid number";
+    }
+    
+    if (!formData.date) {
+      errors.date = "Date is required";
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+  
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    
+    // Clear error when field is changed
+    if (formErrors[name]) {
+      setFormErrors({ ...formErrors, [name]: "" });
+    }
   };
   
   const handleSelectChange = (name: string, value: string) => {
     setFormData({ ...formData, [name]: value });
+    
+    // Clear error when field is changed
+    if (formErrors[name]) {
+      setFormErrors({ ...formErrors, [name]: "" });
+    }
   };
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors in the form.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -88,14 +144,16 @@ export default function EventForm({
       
       // Properly format the data
       const submissionData = {
-        title: formData.title,
-        description: formData.description || "", // Ensure description is not undefined
-        amount: String(formData.amount), // Ensure it's a string
-        date: new Date(formData.date).toISOString(), // Format date properly
+        title: formData.title.trim(),
+        description: formData.description?.trim() || null,
+        amount: formData.amount.toString(),
+        date: new Date(formData.date).toISOString(),
         userId: userId,
         priority: formData.priority,
         category: formData.category
       };
+      
+      console.log("Submitting event data:", submissionData);
       
       await apiRequest(method, endpoint, submissionData);
       
@@ -106,12 +164,25 @@ export default function EventForm({
           : "Your event has been added successfully.",
       });
       
+      // Reset form after successful submission if not editing
+      if (!isEditing) {
+        setFormData({...defaultValues});
+      }
+      
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting form:", error);
+      
+      // More detailed error handling
+      let errorMessage = `Failed to ${isEditing ? 'update' : 'add'} event.`;
+      
+      if (error.message) {
+        errorMessage += ` ${error.message}`;
+      }
+      
       toast({
         title: "Error",
-        description: `Failed to ${isEditing ? 'update' : 'add'} event. Please try again.`,
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -128,9 +199,12 @@ export default function EventForm({
           name="title"
           value={formData.title}
           onChange={handleChange}
-          className="mt-1"
+          className={cn("mt-1", formErrors.title && "border-red-500")}
           required
         />
+        {formErrors.title && (
+          <p className="text-sm text-red-500 mt-1">{formErrors.title}</p>
+        )}
       </div>
       
       <div>
@@ -155,9 +229,12 @@ export default function EventForm({
             min="0"
             value={formData.amount}
             onChange={handleChange}
-            className="mt-1"
+            className={cn("mt-1", formErrors.amount && "border-red-500")}
             required
           />
+          {formErrors.amount && (
+            <p className="text-sm text-red-500 mt-1">{formErrors.amount}</p>
+          )}
         </div>
         
         <div>
@@ -168,9 +245,12 @@ export default function EventForm({
             type="date"
             value={formData.date}
             onChange={handleChange}
-            className="mt-1"
+            className={cn("mt-1", formErrors.date && "border-red-500")}
             required
           />
+          {formErrors.date && (
+            <p className="text-sm text-red-500 mt-1">{formErrors.date}</p>
+          )}
         </div>
       </div>
       
@@ -181,7 +261,7 @@ export default function EventForm({
             value={formData.category}
             onValueChange={(value) => handleSelectChange("category", value)}
           >
-            <SelectTrigger className="w-full mt-1">
+            <SelectTrigger id="category" className="w-full mt-1">
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
@@ -200,7 +280,7 @@ export default function EventForm({
             value={formData.priority}
             onValueChange={(value) => handleSelectChange("priority", value)}
           >
-            <SelectTrigger className="w-full mt-1">
+            <SelectTrigger id="priority" className="w-full mt-1">
               <SelectValue placeholder="Select priority" />
             </SelectTrigger>
             <SelectContent>
@@ -214,7 +294,9 @@ export default function EventForm({
       
       <Button 
         type="submit" 
-        className={cn("w-full mt-2", isSubmitting && "opacity-70")}
+        variant="gradient" 
+        className={cn("w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white", 
+          isSubmitting && "opacity-70")}
         disabled={isSubmitting}
       >
         {isSubmitting 

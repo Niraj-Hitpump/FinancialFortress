@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -42,26 +42,87 @@ export default function AccountForm({
     accountType: "checking",
     balance: "",
     notes: "",
-    ...initialValues
   };
   
-  const [formData, setFormData] = useState(defaultValues);
+  const [formData, setFormData] = useState({...defaultValues});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  
+  // Initialize form with initial values when they are available
+  useEffect(() => {
+    if (initialValues) {
+      setFormData({
+        name: initialValues.name || "",
+        accountNumber: initialValues.accountNumber || "",
+        bankName: initialValues.bankName || "",
+        accountType: initialValues.accountType || "checking",
+        balance: initialValues.balance || "",
+        notes: initialValues.notes || "",
+      });
+    }
+  }, [initialValues]);
+  
+  // Validate the form data
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    
+    if (!formData.name.trim()) {
+      errors.name = "Account name is required";
+    }
+    
+    if (!formData.bankName.trim()) {
+      errors.bankName = "Bank name is required";
+    }
+    
+    if (!formData.accountNumber.trim()) {
+      errors.accountNumber = "Account number is required";
+    }
+    
+    if (!formData.balance) {
+      errors.balance = "Balance is required";
+    } else if (isNaN(parseFloat(formData.balance))) {
+      errors.balance = "Balance must be a valid number";
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
   
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    
+    // Clear error when field is changed
+    if (formErrors[name]) {
+      setFormErrors({ ...formErrors, [name]: "" });
+    }
   };
   
   const handleSelectChange = (name: string, value: string) => {
     setFormData({ ...formData, [name]: value });
+    
+    // Clear error when field is changed
+    if (formErrors[name]) {
+      setFormErrors({ ...formErrors, [name]: "" });
+    }
   };
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors in the form.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -73,15 +134,17 @@ export default function AccountForm({
       
       // Properly format submission data
       const submissionData = {
-        name: formData.name,
-        accountNumber: formData.accountNumber,
-        bankName: formData.bankName,
+        name: formData.name.trim(),
+        accountNumber: formData.accountNumber.trim(),
+        bankName: formData.bankName.trim(),
         accountType: formData.accountType,
-        balance: String(formData.balance), // Ensure it's a string
+        balance: formData.balance.toString(),
         userId: userId,
-        notes: formData.notes || "",
-        credentials: {} // Required field
+        notes: formData.notes?.trim() || null,
+        credentials: {} // Required field, even if empty
       };
+      
+      console.log("Submitting account data:", submissionData);
       
       await apiRequest(method, endpoint, submissionData);
       
@@ -92,17 +155,39 @@ export default function AccountForm({
           : "Your account has been added successfully.",
       });
       
+      // Reset form after successful submission if not editing
+      if (!isEditing) {
+        setFormData({...defaultValues});
+      }
+      
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting form:", error);
+      
+      // More detailed error handling
+      let errorMessage = `Failed to ${isEditing ? 'update' : 'add'} account.`;
+      
+      if (error.message) {
+        errorMessage += ` ${error.message}`;
+      }
+      
       toast({
         title: "Error",
-        description: `Failed to ${isEditing ? 'update' : 'add'} account. Please try again.`,
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);
     }
+  };
+  
+  // Helper function to mask account number display
+  const formatAccountNumber = (accountNumber: string) => {
+    // Only show the last 4 digits if longer than 4 characters
+    if (accountNumber.length > 4) {
+      return '*'.repeat(accountNumber.length - 4) + accountNumber.slice(-4);
+    }
+    return accountNumber;
   };
   
   return (
@@ -114,10 +199,13 @@ export default function AccountForm({
           name="name"
           value={formData.name}
           onChange={handleChange}
-          className="mt-1"
+          className={cn("mt-1", formErrors.name && "border-red-500")}
           placeholder="e.g. Chase Checking"
           required
         />
+        {formErrors.name && (
+          <p className="text-sm text-red-500 mt-1">{formErrors.name}</p>
+        )}
       </div>
       
       <div className="grid grid-cols-2 gap-4">
@@ -128,10 +216,13 @@ export default function AccountForm({
             name="bankName"
             value={formData.bankName}
             onChange={handleChange}
-            className="mt-1"
+            className={cn("mt-1", formErrors.bankName && "border-red-500")}
             placeholder="e.g. Chase Bank"
             required
           />
+          {formErrors.bankName && (
+            <p className="text-sm text-red-500 mt-1">{formErrors.bankName}</p>
+          )}
         </div>
         
         <div>
@@ -140,7 +231,7 @@ export default function AccountForm({
             value={formData.accountType}
             onValueChange={(value) => handleSelectChange("accountType", value)}
           >
-            <SelectTrigger className="w-full mt-1">
+            <SelectTrigger id="accountType" className="w-full mt-1">
               <SelectValue placeholder="Select account type" />
             </SelectTrigger>
             <SelectContent>
@@ -163,10 +254,16 @@ export default function AccountForm({
             name="accountNumber"
             value={formData.accountNumber}
             onChange={handleChange}
-            className="mt-1"
+            className={cn("mt-1", formErrors.accountNumber && "border-red-500")}
             placeholder="e.g. ****1234"
             required
           />
+          {formErrors.accountNumber && (
+            <p className="text-sm text-red-500 mt-1">{formErrors.accountNumber}</p>
+          )}
+          <p className="text-xs text-muted-foreground mt-1">
+            For security, only enter the last 4 digits or use a masked format
+          </p>
         </div>
         
         <div>
@@ -176,11 +273,15 @@ export default function AccountForm({
             name="balance"
             type="number"
             step="0.01"
+            min="0"
             value={formData.balance}
             onChange={handleChange}
-            className="mt-1"
+            className={cn("mt-1", formErrors.balance && "border-red-500")}
             required
           />
+          {formErrors.balance && (
+            <p className="text-sm text-red-500 mt-1">{formErrors.balance}</p>
+          )}
         </div>
       </div>
       
@@ -198,7 +299,9 @@ export default function AccountForm({
       
       <Button 
         type="submit" 
-        className={cn("w-full mt-2", isSubmitting && "opacity-70")}
+        variant="default"
+        className={cn("w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white", 
+          isSubmitting && "opacity-70")}
         disabled={isSubmitting}
       >
         {isSubmitting 

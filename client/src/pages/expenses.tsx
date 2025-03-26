@@ -29,6 +29,69 @@ import {
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+// Function to export transactions to CSV
+const exportTransactions = (transactions: any[]) => {
+  // Define the headers for the CSV
+  const headers = [
+    "ID",
+    "Date",
+    "Description",
+    "Category",
+    "Account",
+    "Type",
+    "Amount",
+    "Notes"
+  ];
+  
+  try {
+    // Convert each transaction to a CSV row
+    const rows = transactions.map(trans => {
+      // Format date
+      const date = formatDate(new Date(trans.date));
+      // Format amount with proper sign based on type
+      const amount = trans.type === "income" ? 
+        parseFloat(trans.amount) : 
+        -parseFloat(trans.amount);
+      
+      return [
+        trans.id,
+        date,
+        trans.description,
+        trans.categoryId, // This would be better with category name
+        trans.accountId, // This would be better with account name
+        trans.type,
+        amount,
+        trans.notes || ""
+      ].join(",");
+    });
+    
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(","),
+      ...rows
+    ].join("\n");
+    
+    // Create a Blob and download link
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    
+    // Set up download attributes
+    const today = new Date().toISOString().split("T")[0];
+    link.setAttribute("href", url);
+    link.setAttribute("download", `finance-transactions-${today}.csv`);
+    link.style.visibility = "hidden";
+    
+    // Append to document, click, and clean up
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error("Error exporting transactions:", error);
+    // Could show a toast message here
+  }
+};
+
 // For the expense chart
 const expenseChartData = [
   { name: "Housing", value: 35, color: "#4F46E5" },
@@ -231,6 +294,7 @@ export default function Expenses() {
                 <Button 
                   variant="outline" 
                   className="bg-white/10 text-white hover:bg-white/20 border-white/20 transition-all"
+                  onClick={() => exportTransactions(transactions)}
                 >
                   <FileDown className="mr-2 h-4 w-4" />
                   Export
