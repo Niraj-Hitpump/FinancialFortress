@@ -142,10 +142,13 @@ export default function ExpenseForm({
       const method = isEditing ? "PUT" : "POST";
       
       // Ensure numeric fields are properly formatted
+      // Create a proper date string in YYYY-MM-DD format
+      const dateStr = formData.date;
+      
       const submissionData = {
         description: formData.description.trim(),
         amount: formData.amount.toString(),
-        date: new Date(formData.date), // Send as Date object
+        date: dateStr,
         type: formData.type,
         categoryId: parseInt(formData.categoryId.toString()),
         accountId: parseInt(formData.accountId.toString()),

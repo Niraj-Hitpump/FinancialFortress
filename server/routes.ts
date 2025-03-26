@@ -116,28 +116,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   app.post("/api/transactions", async (req, res) => {
-    const data = validateBody(insertTransactionSchema, req, res);
-    if (!data) return;
-    
-    const transaction = await storage.createTransaction(data);
-    res.status(201).json(transaction);
+    try {
+      // Create a modified schema that accepts string dates
+      const modifiedSchema = insertTransactionSchema.transform((data) => {
+        if (data.date && typeof data.date === "string") {
+          return {
+            ...data,
+            date: new Date(data.date)
+          };
+        }
+        return data;
+      });
+      
+      const data = validateBody(modifiedSchema, req, res);
+      if (!data) return;
+      
+      const transaction = await storage.createTransaction(data);
+      res.status(201).json(transaction);
+    } catch (error) {
+      console.error("Error creating transaction:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
   });
   
   app.put("/api/transactions/:id", async (req, res) => {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ message: "Invalid transaction ID" });
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid transaction ID" });
+      }
+      
+      // Create a modified schema that accepts string dates
+      const modifiedSchema = insertTransactionSchema.partial().transform((data) => {
+        if (data.date && typeof data.date === "string") {
+          return {
+            ...data,
+            date: new Date(data.date)
+          };
+        }
+        return data;
+      });
+      
+      const data = validateBody(modifiedSchema, req, res);
+      if (!data) return;
+      
+      const transaction = await storage.updateTransaction(id, data);
+      if (!transaction) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
+      
+      res.status(200).json(transaction);
+    } catch (error) {
+      console.error("Error updating transaction:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
-    
-    const data = validateBody(insertTransactionSchema.partial(), req, res);
-    if (!data) return;
-    
-    const transaction = await storage.updateTransaction(id, data);
-    if (!transaction) {
-      return res.status(404).json({ message: "Transaction not found" });
-    }
-    
-    res.status(200).json(transaction);
   });
   
   app.delete("/api/transactions/:id", async (req, res) => {
@@ -166,28 +198,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   app.post("/api/goals", async (req, res) => {
-    const data = validateBody(insertGoalSchema, req, res);
-    if (!data) return;
-    
-    const goal = await storage.createGoal(data);
-    res.status(201).json(goal);
+    try {
+      // Create a modified schema that accepts string dates
+      const modifiedSchema = insertGoalSchema.transform((data) => {
+        if (data.targetDate && typeof data.targetDate === "string") {
+          return {
+            ...data,
+            targetDate: new Date(data.targetDate)
+          };
+        }
+        return data;
+      });
+      
+      const data = validateBody(modifiedSchema, req, res);
+      if (!data) return;
+      
+      const goal = await storage.createGoal(data);
+      res.status(201).json(goal);
+    } catch (error) {
+      console.error("Error creating goal:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
   });
   
   app.put("/api/goals/:id", async (req, res) => {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ message: "Invalid goal ID" });
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid goal ID" });
+      }
+      
+      // Create a modified schema that accepts string dates
+      const modifiedSchema = insertGoalSchema.partial().transform((data) => {
+        if (data.targetDate && typeof data.targetDate === "string") {
+          return {
+            ...data,
+            targetDate: new Date(data.targetDate)
+          };
+        }
+        return data;
+      });
+      
+      const data = validateBody(modifiedSchema, req, res);
+      if (!data) return;
+      
+      const goal = await storage.updateGoal(id, data);
+      if (!goal) {
+        return res.status(404).json({ message: "Goal not found" });
+      }
+      
+      res.status(200).json(goal);
+    } catch (error) {
+      console.error("Error updating goal:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
-    
-    const data = validateBody(insertGoalSchema.partial(), req, res);
-    if (!data) return;
-    
-    const goal = await storage.updateGoal(id, data);
-    if (!goal) {
-      return res.status(404).json({ message: "Goal not found" });
-    }
-    
-    res.status(200).json(goal);
   });
   
   app.delete("/api/goals/:id", async (req, res) => {
@@ -216,28 +280,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   app.post("/api/events", async (req, res) => {
-    const data = validateBody(insertEventSchema, req, res);
-    if (!data) return;
-    
-    const event = await storage.createEvent(data);
-    res.status(201).json(event);
+    try {
+      // Create a modified schema that accepts string dates
+      const modifiedSchema = insertEventSchema.transform((data) => {
+        if (data.date && typeof data.date === "string") {
+          return {
+            ...data,
+            date: new Date(data.date)
+          };
+        }
+        return data;
+      });
+      
+      const data = validateBody(modifiedSchema, req, res);
+      if (!data) return;
+      
+      const event = await storage.createEvent(data);
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("Error creating event:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
   });
   
   app.put("/api/events/:id", async (req, res) => {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ message: "Invalid event ID" });
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid event ID" });
+      }
+      
+      // Create a modified schema that accepts string dates
+      const modifiedSchema = insertEventSchema.partial().transform((data) => {
+        if (data.date && typeof data.date === "string") {
+          return {
+            ...data,
+            date: new Date(data.date)
+          };
+        }
+        return data;
+      });
+      
+      const data = validateBody(modifiedSchema, req, res);
+      if (!data) return;
+      
+      const event = await storage.updateEvent(id, data);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      res.status(200).json(event);
+    } catch (error) {
+      console.error("Error updating event:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
-    
-    const data = validateBody(insertEventSchema.partial(), req, res);
-    if (!data) return;
-    
-    const event = await storage.updateEvent(id, data);
-    if (!event) {
-      return res.status(404).json({ message: "Event not found" });
-    }
-    
-    res.status(200).json(event);
   });
   
   app.delete("/api/events/:id", async (req, res) => {
