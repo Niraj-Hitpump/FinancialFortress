@@ -1,12 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { ColumnDef } from "@tanstack/react-table";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { PlusIcon, Trash2, Edit, FileDown } from "lucide-react";
+import { 
+  PlusIcon, 
+  Trash2, 
+  Edit, 
+  FileDown, 
+  ArrowUpDown, 
+  CreditCard,
+  TrendingUp,
+  Activity 
+} from "lucide-react";
 import ExpenseForm from "@/components/expenses/expense-form";
 import ExpenseChart from "@/components/dashboard/expense-chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,7 +24,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -34,8 +43,16 @@ export default function Expenses() {
   const userId = 1; // For demo purposes
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
+  const [animateCards, setAnimateCards] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    // Trigger animations when component mounts
+    setTimeout(() => {
+      setAnimateCards(true);
+    }, 300);
+  }, []);
 
   const { data: transactions = [], isLoading: isLoadingTransactions } = useQuery({
     queryKey: [`/api/transactions?userId=${userId}`],
@@ -91,53 +108,93 @@ export default function Expenses() {
   const columns: ColumnDef<any>[] = [
     {
       accessorKey: "date",
-      header: "Date",
-      cell: ({ row }) => formatDate(new Date(row.original.date)),
+      header: ({ column }) => (
+        <div className="flex items-center space-x-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 data-[state=open]:bg-accent"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            <span>Date</span>
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="font-medium">{formatDate(new Date(row.original.date))}</div>
+      ),
     },
     {
       accessorKey: "description",
       header: "Description",
+      cell: ({ row }) => (
+        <div className="font-medium">{row.original.description}</div>
+      ),
     },
     {
       accessorKey: "categoryId",
       header: "Category",
-      cell: ({ row }) => getCategoryName(row.original.categoryId),
+      cell: ({ row }) => (
+        <div className="font-medium">{getCategoryName(row.original.categoryId)}</div>
+      ),
     },
     {
       accessorKey: "accountId",
       header: "Account",
-      cell: ({ row }) => getAccountName(row.original.accountId),
+      cell: ({ row }) => (
+        <div className="flex items-center">
+          <CreditCard className="mr-2 h-4 w-4 text-muted-foreground" />
+          <span>{getAccountName(row.original.accountId)}</span>
+        </div>
+      ),
     },
     {
       accessorKey: "type",
       header: "Type",
       cell: ({ row }) => (
-        <Badge variant={row.original.type === "income" ? "success" : "destructive"}>
+        <Badge variant={row.original.type === "income" ? "success" : "destructive"} className="animate-fade-in">
           {row.original.type === "income" ? "Income" : "Expense"}
         </Badge>
       ),
     },
     {
       accessorKey: "amount",
-      header: "Amount",
+      header: ({ column }) => (
+        <div className="flex items-center space-x-1 justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 data-[state=open]:bg-accent"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            <span>Amount</span>
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      ),
       cell: ({ row }) => {
         const amount = parseFloat(row.original.amount);
         const formattedAmount = formatCurrency(amount);
+        const isIncome = row.original.type === "income";
         return (
-          <span className={row.original.type === "income" ? "text-secondary font-medium" : "text-accent font-medium"}>
-            {row.original.type === "income" ? "+" : "-"}{formattedAmount}
-          </span>
+          <div className="text-right font-medium">
+            <span className={`${isIncome ? "text-emerald-500" : "text-rose-500"} gradient-text font-semibold`}>
+              {isIncome ? "+" : "-"}{formattedAmount}
+            </span>
+          </div>
         );
       },
     },
     {
       id: "actions",
       cell: ({ row }) => (
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center justify-end space-x-2">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => handleEditTransaction(row.original)}
+            className="hover:text-primary hover:bg-primary/10 transition-colors"
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -145,6 +202,7 @@ export default function Expenses() {
             variant="ghost" 
             size="icon"
             onClick={() => handleDeleteTransaction(row.original.id)}
+            className="hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -155,33 +213,56 @@ export default function Expenses() {
 
   return (
     <div className="space-y-8 fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Expense Tracker</h1>
-          <p className="text-sm text-gray-500">Manage and track your expenses and income</p>
-        </div>
-        <div className="flex space-x-2">
-          <Button variant="outline">
-            <FileDown className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-          <Button onClick={() => setIsAddExpenseOpen(true)}>
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Add Transaction
-          </Button>
+      {/* Header with gradient background */}
+      <div className="rounded-lg overflow-hidden animate-scale-in">
+        <div className="relative overflow-hidden rounded-lg p-8 bg-gradient-to-r from-rose-600 to-purple-700">
+          <div className="absolute inset-0 bg-grid-white/10 mask-image-gradient"></div>
+          <div className="relative z-10">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl mb-2">
+                  Expense Tracker
+                </h1>
+                <p className="text-rose-100 max-w-[600px] md:text-lg">
+                  Track and manage your expenses and income with ease
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button 
+                  variant="outline" 
+                  className="bg-white/10 text-white hover:bg-white/20 border-white/20 transition-all"
+                >
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Export
+                </Button>
+                <Button 
+                  variant="secondary" 
+                  className="animate-bounce-in transition-all hover:shadow-lg"
+                  onClick={() => setIsAddExpenseOpen(true)}
+                >
+                  <PlusIcon className="mr-2 h-4 w-4" />
+                  Add Transaction
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <Tabs defaultValue="all">
-        <TabsList>
-          <TabsTrigger value="all">All Transactions</TabsTrigger>
-          <TabsTrigger value="expenses">Expenses</TabsTrigger>
-          <TabsTrigger value="income">Income</TabsTrigger>
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="w-full justify-start mb-4 bg-background/50 backdrop-blur-sm">
+          <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">All Transactions</TabsTrigger>
+          <TabsTrigger value="expenses" className="data-[state=active]:bg-rose-600 data-[state=active]:text-white transition-all">Expenses</TabsTrigger>
+          <TabsTrigger value="income" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white transition-all">Income</TabsTrigger>
         </TabsList>
-        <TabsContent value="all" className="space-y-4">
-          <Card>
+        <TabsContent value="all" className="space-y-4 animate-fade-in">
+          <Card variant="glass" bordered={false} className="shadow-xl">
             <CardHeader className="pb-2">
-              <CardTitle>All Transactions</CardTitle>
+              <CardTitle className="flex items-center">
+                <Activity className="h-5 w-5 mr-2 text-primary" />
+                All Transactions
+              </CardTitle>
+              <CardDescription>View and manage all your financial transactions</CardDescription>
             </CardHeader>
             <CardContent>
               <DataTable
@@ -193,10 +274,14 @@ export default function Expenses() {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="expenses" className="space-y-4">
-          <Card>
+        <TabsContent value="expenses" className="space-y-4 animate-fade-in">
+          <Card variant="glass" bordered={false} className="shadow-xl">
             <CardHeader className="pb-2">
-              <CardTitle>Expenses</CardTitle>
+              <CardTitle className="flex items-center">
+                <TrendingUp className="h-5 w-5 mr-2 text-rose-500" />
+                Expenses
+              </CardTitle>
+              <CardDescription>Track where your money is going</CardDescription>
             </CardHeader>
             <CardContent>
               <DataTable
@@ -208,10 +293,14 @@ export default function Expenses() {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="income" className="space-y-4">
-          <Card>
+        <TabsContent value="income" className="space-y-4 animate-fade-in">
+          <Card variant="glass" bordered={false} className="shadow-xl">
             <CardHeader className="pb-2">
-              <CardTitle>Income</CardTitle>
+              <CardTitle className="flex items-center">
+                <TrendingUp className="h-5 w-5 mr-2 text-emerald-500" />
+                Income
+              </CardTitle>
+              <CardDescription>Track your earnings and revenue sources</CardDescription>
             </CardHeader>
             <CardContent>
               <DataTable
@@ -226,31 +315,56 @@ export default function Expenses() {
       </Tabs>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Expense Categories</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ExpenseChart data={expenseChartData} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Monthly Trends</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-              Monthly spending trends chart will appear here
-            </div>
-          </CardContent>
-        </Card>
+        <div className={`transition-all duration-500 transform ${animateCards ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} 
+             style={{ transitionDelay: '200ms' }}>
+          <Card variant="glass" bordered={false} className="shadow-xl overflow-hidden">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 mr-2 flex items-center justify-center">
+                  <Activity className="h-4 w-4 text-white" />
+                </div>
+                Expense Categories
+              </CardTitle>
+              <CardDescription>How your spending is distributed</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ExpenseChart data={expenseChartData} />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className={`transition-all duration-500 transform ${animateCards ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} 
+             style={{ transitionDelay: '300ms' }}>
+          <Card variant="glass" bordered={false} className="shadow-xl overflow-hidden">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 mr-2 flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-white" />
+                </div>
+                Monthly Trends
+              </CardTitle>
+              <CardDescription>Your spending patterns over time</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground bg-muted/20 rounded-lg p-4 backdrop-blur-sm">
+                <div className="text-center animate-pulse-subtle">
+                  <Activity className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
+                  <p>Monthly spending trends chart will appear here</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Add Transaction Dialog */}
       <Dialog open={isAddExpenseOpen} onOpenChange={setIsAddExpenseOpen}>
-        <DialogContent className="sm:max-w-[525px]">
+        <DialogContent className="sm:max-w-[525px] animate-scale-in glass-dark">
           <DialogHeader>
             <DialogTitle>Add New Transaction</DialogTitle>
+            <DialogDescription>
+              Record a new transaction to keep track of your finances
+            </DialogDescription>
           </DialogHeader>
           <ExpenseForm userId={userId} onSuccess={handleFormSuccess} />
         </DialogContent>
@@ -261,9 +375,12 @@ export default function Expenses() {
         open={!!editingTransaction} 
         onOpenChange={(open) => !open && setEditingTransaction(null)}
       >
-        <DialogContent className="sm:max-w-[525px]">
+        <DialogContent className="sm:max-w-[525px] animate-scale-in glass-dark">
           <DialogHeader>
             <DialogTitle>Edit Transaction</DialogTitle>
+            <DialogDescription>
+              Update the details of this transaction
+            </DialogDescription>
           </DialogHeader>
           {editingTransaction && (
             <ExpenseForm 

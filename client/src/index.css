@@ -9,12 +9,64 @@
 
   body {
     @apply font-sans antialiased text-foreground;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    background: radial-gradient(circle at 100% 10%, rgba(28, 25, 40, 1) 0%, rgba(11, 15, 33, 1) 100%);
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Main area styling */
+  main {
+    position: relative;
+    z-index: 1;
   }
 
   /* Smooth scrolling for page */
   html {
     scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Card variants */
+  .card-gradient {
+    @apply bg-gradient-to-br from-blue-600/5 to-purple-600/5 backdrop-blur-xl border border-white/5;
+  }
+
+  .card-glass {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10;
+  }
+
+  /* Gradient buttons */
+  .btn-gradient {
+    @apply bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white;
+  }
+
+  .btn-gradient-success {
+    @apply bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white;
+  }
+
+  .btn-gradient-danger {
+    @apply bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white;
+  }
+
+  /* Fancy badge styles */
+  .badge-gradient {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+    background: linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+    border: 1px solid rgba(59, 130, 246, 0.2);
+  }
+  
+  /* Background grid pattern */
+  .bg-grid-white {
+    background-image: 
+      linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .mask-image-gradient {
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1.0) 30%, transparent 100%);
   }
 }
 
@@ -49,6 +101,21 @@
     animation: gradientShift 5s ease infinite;
   }
 
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2.5s infinite;
+  }
+
+  .animate-glow {
+    animation: glow 1.5s ease-in-out infinite alternate;
+  }
+
   /* Transition classes */
   .transition-all-300 {
     transition: all 0.3s ease;
@@ -63,11 +130,12 @@
   }
 
   .hover-scale {
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
 
   .hover-scale:hover {
     transform: scale(1.03);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.2);
   }
 
   .card-hover {
@@ -85,25 +153,25 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: rgba(15, 23, 42, 0.3);
     border-radius: 10px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #888;
+    background: rgba(99, 102, 241, 0.5);
     border-radius: 10px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: rgba(99, 102, 241, 0.7);
   }
 
   /* Glassmorphism effect */
   .glass {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .glass-dark {
@@ -118,7 +186,22 @@
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
+  }
+
+  .gradient-blue {
     background-image: linear-gradient(45deg, #3b82f6, #8b5cf6);
+  }
+
+  .gradient-purple {
+    background-image: linear-gradient(45deg, #8b5cf6, #d946ef);
+  }
+
+  .gradient-green {
+    background-image: linear-gradient(45deg, #10b981, #3b82f6);
+  }
+
+  .gradient-amber {
+    background-image: linear-gradient(45deg, #f59e0b, #ef4444);
   }
 
   /* Fancy border */
@@ -126,6 +209,37 @@
     border: 2px solid;
     border-image-slice: 1;
     border-image-source: linear-gradient(to right, #3b82f6, #8b5cf6);
+  }
+
+  /* Frosted glass effect */
+  .frosted {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Neo-brutalism style */
+  .neo-brutalism {
+    background: #0f172a;
+    border: 2px solid #000;
+    box-shadow: 5px 5px 0px #000;
+    transform: translate(-2px, -2px);
+    transition: all 0.2s ease;
+  }
+
+  .neo-brutalism:hover {
+    transform: translate(0, 0);
+    box-shadow: 0px 0px 0px #000;
+  }
+
+  /* Noise texture */
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    background-position: 0 0;
+    background-size: 200px 200px;
+    opacity: 0.05;
   }
 }
 
@@ -211,6 +325,24 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.3), 0 0 20px rgba(99, 102, 241, 0.2);
+  }
+  to {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.6), 0 0 40px rgba(99, 102, 241, 0.4);
+  }
+}
+
 /* Add pulse animation for cards */
 .card-pulse {
   animation: cardPulse 2s infinite;
@@ -242,4 +374,49 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Custom styling for the planning page */
+.planning-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.planning-card::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  background: linear-gradient(90deg, #4f46e5, #8b5cf6, #3b82f6);
+  z-index: -1;
+  filter: blur(20px);
+  opacity: 0.15;
+  transition: opacity 0.3s ease;
+}
+
+.planning-card:hover::before {
+  opacity: 0.25;
+}
+
+/* Decorative elements */
+.deco-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(99, 102, 241, 0.2) 0%, rgba(99, 102, 241, 0) 70%);
+  z-index: -1;
+}
+
+/* Utility for hiding elements visually but keeping them accessible */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
