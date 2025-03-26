@@ -47,14 +47,19 @@ const GoalForm = ({ userId, onSuccess }: { userId: number; onSuccess: () => void
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      // Keep targetDate as string, do not convert to Date object
+      const targetDateStr = formData.targetDate;
+      
       await apiRequest("POST", "/api/goals", {
         ...formData,
         userId,
-        targetAmount: parseFloat(formData.targetAmount),
-        currentAmount: parseFloat(formData.currentAmount)
+        targetDate: targetDateStr,
+        targetAmount: formData.targetAmount,
+        currentAmount: formData.currentAmount
       });
       onSuccess();
     } catch (error) {
+      console.error("Error creating goal:", error);
       toast({
         title: "Error",
         description: "Failed to create goal. Please try again.",

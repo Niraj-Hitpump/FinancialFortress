@@ -143,11 +143,14 @@ export default function EventForm({
       const method = isEditing ? "PUT" : "POST";
       
       // Properly format the data
+      // Keep date as string in YYYY-MM-DD format
+      const dateStr = formData.date;
+      
       const submissionData = {
         title: formData.title.trim(),
         description: formData.description?.trim() || null,
         amount: formData.amount.toString(),
-        date: new Date(formData.date), // Send as Date object
+        date: dateStr,
         userId: userId,
         priority: formData.priority,
         category: formData.category
