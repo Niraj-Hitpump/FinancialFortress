@@ -20,7 +20,7 @@ export default function Footer() {
             </Link>
           </div>
           <div className="mt-4 md:mt-0 text-center md:text-right">
-            <p className="text-sm text-gray-500">&copy; {new Date().getFullYear()} FinTrack. All rights reserved.</p>
+            <p className="text-sm text-gray-500">&copy; {new Date().getFullYear()} HitpumpTrack. All rights reserved.</p>
           </div>
         </div>
       </div>

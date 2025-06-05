@@ -23,7 +23,7 @@ export default function Header({ userId }: HeaderProps) {
           <div className="flex justify-start lg:w-0 lg:flex-1">
             <Link href="/" className="flex items-center">
               <HomeIcon className="h-8 w-8 text-primary" />
-              <span className="ml-2 text-xl font-bold text-gray-800">FinTrack</span>
+              <span className="ml-2 text-xl font-bold text-gray-800">HitpumpTrack</span>
             </Link>
           </div>
           
