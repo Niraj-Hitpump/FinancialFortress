@@ -4,7 +4,7 @@ Financial Fortress is Financial Planning project where the user can see particul
 ![HOME](https://github.com/Niraj-Hitpump/FinancialFortress/blob/main/images/home.png).
 
 #Account
-![Account] (https://github.com/Niraj-Hitpump/FinancialFortress/blob/main/images/account.png).
+![Account](https://github.com/Niraj-Hitpump/FinancialFortress/blob/main/images/account.png).
 
 #Add Transaction:-
 ![Add] (https://github.com/Niraj-Hitpump/FinancialFortress/blob/main/images/add.png).
